@@ -1,0 +1,78 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>057bbfe5-3542-4565-b770-a4409fd9b2ed</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>main.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>tetris</Name>
+    <RootNamespace>tetris</RootNamespace>
+    <InterpreterId>MSBuild|env_games|$(MSBuildProjectFullPath)</InterpreterId>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Interpreter Include="..\env_games\">
+      <Id>env_games</Id>
+      <Version>3.14</Version>
+      <Description>env_games (Python 3.14 (64-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>X64</Architecture>
+    </Interpreter>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="block.py" />
+    <Compile Include="controls\button.py" />
+    <Compile Include="controls\checkbox.py" />
+    <Compile Include="controls\checkGroup.py" />
+    <Compile Include="controls\controls.py" />
+    <Compile Include="controls\__init__.py" />
+    <Compile Include="field.py" />
+    <Compile Include="lib.py" />
+    <Compile Include="main.py" />
+    <Compile Include="settings.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\background\dog.bmp" />
+    <Content Include="assets\cancel.png" />
+    <Content Include="assets\exit.png" />
+    <Content Include="assets\help.png" />
+    <Content Include="assets\options.png" />
+    <Content Include="assets\start.png" />
+    <Content Include="assets\tetris.gif" />
+    <Content Include="readme.txt" />
+    <Content Include="Sounds\clear.ogg" />
+    <Content Include="sounds\exit.mp3" />
+    <Content Include="Sounds\music.ogg" />
+    <Content Include="sounds\new_level.mp3" />
+    <Content Include="Sounds\rotate.ogg" />
+    <Content Include="sounds\start.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="assets\" />
+    <Folder Include="assets\background\" />
+    <Folder Include="controls\" />
+    <Folder Include="Sounds\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+  <!-- Uncomment the CoreCompile target to enable the Build command in
+       Visual Studio and specify your pre- and post-build commands in
+       the BeforeBuild and AfterBuild targets below. -->
+  <!--<Target Name="CoreCompile" />-->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>
