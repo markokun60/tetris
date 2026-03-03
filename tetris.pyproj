@@ -38,6 +38,7 @@
     <Compile Include="controls\checkbox.py" />
     <Compile Include="controls\checkGroup.py" />
     <Compile Include="controls\controls.py" />
+    <Compile Include="controls\textBox.py" />
     <Compile Include="controls\__init__.py" />
     <Compile Include="field.py" />
     <Compile Include="lib.py" />
@@ -45,6 +46,7 @@
     <Compile Include="settings.py" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="assets\background\cat.bmp" />
     <Content Include="assets\background\dog.bmp" />
     <Content Include="assets\cancel.png" />
     <Content Include="assets\exit.png" />

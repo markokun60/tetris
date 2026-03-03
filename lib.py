@@ -29,7 +29,7 @@ def render_text_effects(surface, text, font, time_elapsed,width,height):
 
 FRAMES_PER_SECOND = 30
 
-def fade_in(window,surface, rect, color, speed,clock,fnt,text):
+def fade_in(window,surface, rect, color,  speed,clock,fnt,text):
     '''Perform a fade-in effect on a given surface.'''
     for alpha in range(0, 255, speed):
         surface.fill(color)
@@ -37,7 +37,8 @@ def fade_in(window,surface, rect, color, speed,clock,fnt,text):
         surface.set_alpha(alpha)
         window.blit(surface, rect)
 
-        t = fnt.render(text, True, (255,0,0))
+        txt_color = (255,255 - alpha,0) 
+        t = fnt.render(text, True, txt_color)
         window.blit(t,(100,100))
 
         pygame.display.update()
@@ -51,9 +52,43 @@ def fade_out(window,surface, rect, color, speed,clock,fnt,text):
         window.fill((0,0,0))
         window.blit(surface, rect)
 
-        t = fnt.render(text, True, (255,0,0))
+        txt_color = (255,255 - alpha,0) 
+        t = fnt.render(text, True, txt_color)
         window.blit(t,(100,100))
 
         pygame.display.update()
         clock.tick(FRAMES_PER_SECOND)
 
+
+def scale_image_keep_ratio(image, max_width, max_height):
+    """Scale an image to fit within max_width and max_height while keeping aspect ratio."""
+    original_width, original_height = image.get_size()
+    
+    # Calculate scaling factor
+    ratio = min(max_width / original_width, max_height / original_height)
+    
+    # Compute new dimensions
+    new_width = int(original_width * ratio)
+    new_height = int(original_height * ratio)
+    
+    # Scale the image smoothly
+    return pygame.transform.smoothscale(image, (new_width, new_height))
+
+def draw_box_with_label(window,rect,label_surf,color,line_width = 1):
+    w = label_surf.get_width()
+    x = rect.left +  (rect.width - w)/2
+
+    pygame.draw.line(window,color, (rect.left,rect.top),(x,rect.top),line_width)
+    y = rect.top - label_surf.get_height() // 2
+    window.blit(label_surf,(x,y))
+    x += w
+    pygame.draw.line(window,color, (x,rect.top),(rect.right,rect.top))
+
+   
+    points = [
+        (rect.left ,rect.top),
+        (rect.left ,rect.bottom),
+        (rect.right,rect.bottom),
+        (rect.right,rect.top)
+    ]
+    pygame.draw.lines(window,color,False,points,line_width)

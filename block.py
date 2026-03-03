@@ -1,11 +1,12 @@
 import pygame
 from typing import Final
 
-from settings import * 
+from settings import *
 
 class Block:
-    def __init__(self,cells,id,row = 0,col = 3):
+    def __init__(self,cells,id,cell_size,row = 0,col = 3):
         self.id = id
+        self.cell_size = cell_size
         self.all_cells = cells
         self.row   = row
         self.col   = col
@@ -15,7 +16,7 @@ class Block:
 
         self.images = {}
         for i in self.all_cells.keys():
-            image = self.createImage(self.all_cells[i])
+            image = self.createImage(self.all_cells[i],self.cell_size)
             self.images[i] = image
 
         self._current_values()
@@ -67,22 +68,22 @@ class Block:
         self._current_values()
 
 
-    def createImage(self,cells): 
+    def createImage(self,cells,cell_size): 
         max_row,max_col,min_row,min_col = self.get_max_edges(cells)
         #print(cells,max_row,max_col)
 
-        size_x = (max_col + 1) * CELL_SIZE
-        size_y = (max_row + 1) * CELL_SIZE
+        size_x = (max_col + 1) * cell_size
+        size_y = (max_row + 1) * cell_size
 
         image = pygame.Surface((size_x,size_y), pygame.SRCALPHA, 32)
         image = image.convert_alpha()
 
         for (r,c) in cells:           
-            y = r * CELL_SIZE
-            x = c * CELL_SIZE
+            y = r * cell_size
+            x = c * cell_size
 
-            pygame.draw.rect(image,self.color   ,(x,y,CELL_SIZE,CELL_SIZE),0)
-            pygame.draw.rect(image,BLOCK_BORDER,(x,y,CELL_SIZE,CELL_SIZE),1)
+            pygame.draw.rect(image,self.color  ,(x,y,cell_size,cell_size),0)
+            pygame.draw.rect(image,BLOCK_BORDER,(x,y,cell_size,cell_size),1)
         return image
 
     def is_collided(self,field,dr,dc):
@@ -126,8 +127,8 @@ class Block:
         self.active = False
 
     def draw(self,screen,field):
-        self.y = self.row * CELL_SIZE + field.yTop
-        self.x = self.col * CELL_SIZE + field.xLeft
+        self.y = self.row * self.cell_size + field.yTop
+        self.x = self.col * self.cell_size + field.xLeft
         screen.blit(self.image,(self.x,self.y))
 
     def move_horizontal(self,field,c):             
@@ -167,8 +168,8 @@ class BlockI(Block):
         3:[(0,1),(1,1),(2,1),(3,1)],
     }
 
-    def __init__(self):
-        super().__init__(self.CELLS,1,-1)
+    def __init__(self,cell_size):
+        super().__init__(self.CELLS,1,cell_size,-1)
         
 class BlockO(Block):
     #
@@ -179,8 +180,8 @@ class BlockO(Block):
         0: [(0,0),(0,1),(1,0),(1,1)]
     }
 
-    def __init__(self):
-        super().__init__(self.CELLS,2)
+    def __init__(self,cell_size):
+        super().__init__(self.CELLS,2,cell_size)
 
 
 class BlockT(Block):
@@ -195,8 +196,8 @@ class BlockT(Block):
         3:[(0,1),(1,0),(1,1),(2,1)],
     }
 
-    def __init__(self):
-        super().__init__(self.CELLS,3)
+    def __init__(self,cell_size):
+        super().__init__(self.CELLS,3,cell_size)
 
 class BlockJ(Block):
     #  .X
@@ -211,8 +212,8 @@ class BlockJ(Block):
         3:[(0,1),(1,1),(2,0),(2,1)],
     }
 
-    def __init__(self):
-        super().__init__(self.CELLS,4)
+    def __init__(self,cell_size):
+        super().__init__(self.CELLS,4,cell_size)
 
 class BlockL(Block):
 
@@ -227,8 +228,8 @@ class BlockL(Block):
         2:[(1,0),(1,1),(1,2),(2,0)],
         3:[(0,0),(0,1),(1,1),(2,1)],
     }
-    def __init__(self):
-        super().__init__(self.CELLS,5)
+    def __init__(self,cell_size):
+        super().__init__(self.CELLS,5,cell_size)
 
 class BlockS(Block):
 
@@ -243,8 +244,8 @@ class BlockS(Block):
         2:[(1,1),(1,2),(2,0),(2,1)],
         3:[(0,0),(1,0),(1,1),(2,1)],
     }
-    def __init__(self):
-        super().__init__(self.CELLS,6)
+    def __init__(self,cell_size):
+        super().__init__(self.CELLS,6,cell_size)
 
 
 class BlockZ(Block):
@@ -259,8 +260,8 @@ class BlockZ(Block):
         2:[(1,0),(1,1),(2,1),(2,2)],
         3:[(0,1),(1,0),(1,1),(2,0)],
     }
-    def __init__(self):
-        super().__init__(self.CELLS,7)
+    def __init__(self,cell_size):
+        super().__init__(self.CELLS,7,cell_size)
 
 
 

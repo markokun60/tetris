@@ -1,4 +1,3 @@
-from fnmatch import filterfalse
 import pygame
 import random
 import os
@@ -33,6 +32,7 @@ class Game:
 
     REG_FPS  = 3
     FAST_FPS = 20
+    FPS_LEVEL_VELOCITY = 2
     def __init__(self):
         pygame.init()
         pygame.font.init()
@@ -61,14 +61,7 @@ class Game:
             1:GameSummary(),
             2:GameSummary()
         }
-       
-        self.imgDog = pygame.image.load(os.path.join(ASSET_FOLDER,BK_FOLDER,'dog.bmp')).convert_alpha()
-        self.imgCat = pygame.image.load(os.path.join(ASSET_FOLDER,BK_FOLDER,'cat.bmp')).convert_alpha()
-        
-        #self.imgBK  = pygame.image.load(os.path.join(ASSET_FOLDER,'background.png')).convert_alpha()
-        #self.imgBK = pygame.transform.scale(self.imgBK,(WINDOW_WIDTH,WINDOW_HEIGHT))
- 
-        #self.start_time = 
+     
         self.is_paused  = False
 
         self.big_text_font  = pygame.font.SysFont(FONTS, 18,bold=True,italic = True )
@@ -81,14 +74,16 @@ class Game:
         self.is_play_mode = False
         self.size_index = 0
         self.bk_index   = 0
-
+       
+        self.background = ['None']
+        self.background_img = {0:None}
+       
+        self.load_backggounds()
         self.read_config()
         self.set_field_size()
 
-        x = COLS * CELL_SIZE
-        y = CELL_SIZE
         #self.field_rect= pygame.Rect(0,0,x,WINDOW_HEIGHT)
-        self.info_rect = pygame.Rect(x,y, INFO_CELLS_WIDTH *  CELL_SIZE, WINDOW_HEIGHT - y * 2) 
+        self.info_rect = pygame.Rect(INFO_X,INFO_Y, INFO_CELLS_WIDTH *CELL_SIZE, WINDOW_HEIGHT - INFO_Y * 2) 
         #
         self.rotate_sound    = pygame.mixer.Sound(os.path.join(FOLDER_SOUNDS,"rotate.ogg"))
         self.clear_row_sound = pygame.mixer.Sound(os.path.join(FOLDER_SOUNDS,"clear.ogg"))
@@ -120,6 +115,7 @@ class Game:
         self.prompt = ""
         self.prompt_time = time.time()
 
+        self.items_counts = [0,0,0,0,0,0,0,0]     
         self.mode = self.MODE_INFO
   
     def start_game_music(self):
@@ -130,14 +126,19 @@ class Game:
             self.game_music.play(loops = -1)
             return True
 
+    def load_backggounds(self):
+        i = 0
+        for folder_path, _, image_names in os.walk(os.path.join(ASSET_FOLDER, BK_FOLDER)):
+            for image_name in image_names:
+                full_path = os.path.join(folder_path, image_name)
+                img = pygame.image.load(full_path).convert_alpha()
+                i += 1
+                short_name = image_name.split('.')[0]
+                self.background.append(short_name)
+                self.background_img[i] = img 
 
     def set_field_size(self):
-        if self.bk_index == 0:
-            self.field.backgroundImage = None
-        elif self.bk_index == 1:
-            self.field.backgroundImage = self.imgCat
-        elif self.bk_index == 2:
-            self.field.backgroundImage = self.imgDog
+        self.field.backgroundImage = self.background_img[self.bk_index]      
         (cols,rows) = COLS_ROWS[self.size_index]
         self.field.set_sizes(rows,cols)
 
@@ -176,7 +177,7 @@ class Game:
 
         y = self.sizeGroup.rect.bottom
         y += 16
-        self.bkGroup = CheckGroup(BACKGROUNDS,self.bk_index,x,y,"Background")
+        self.bkGroup = CheckGroup(self.background,self.bk_index,x,y,"Background")
 
         for chk in self.bkGroup.chk_boxes:
             chk.hide = True
@@ -320,6 +321,8 @@ class Game:
             if self.is_sound:
                 self.start_sound.play()
             
+        for i in range(7):
+            self.items_counts[i] = 0
                 
     def game_over(self): 
         if self.game_music != None:
@@ -355,11 +358,10 @@ class Game:
     def next_level(self):
         self.level_rows = 0
         self.level     += 1
-        self.FPS       += 1
+        self.FPS       += self.FPS_LEVEL_VELOCITY
         self.set_prompt("You pass the level")
         if self.is_sound:
             self.new_lvl_sound.play()
-
 
     def get_time(self):
        if self.is_play_mode:
@@ -380,22 +382,23 @@ class Game:
             i = self.next_block
         else:
             i = random.randint(0,n)
-
+            
+        cell_size = self.field.cell_size
         self.next_block = random.randint(0,n)
         if i == 0:
-            self.block = BlockI()
+            self.block = BlockI(cell_size)
         elif i == 1:
-            self.block =  BlockO()
+            self.block =  BlockO(cell_size)
         elif i == 2:
-            self.block =  BlockT()
+            self.block =  BlockT(cell_size)
         elif i == 3:
-            self.block = BlockJ()
+            self.block = BlockJ(cell_size)
         elif i == 4:
-            self.block = BlockL()
+            self.block = BlockL(cell_size)
         elif i == 5:
-            self.block = BlockS()
+            self.block = BlockS(cell_size)
         elif i == 6:
-            self.block = BlockZ()
+            self.block = BlockZ(cell_size)
         else:
             print(f"Fatal error - invalid block {i}")
             self.block = None
@@ -405,12 +408,50 @@ class Game:
             self.block = None
         else:
             self.total_items += 1
+            self.items_counts[i] += 1
 
     def drawPreview(self,y):
-        if self.next_block < 0:return
-        i = self.next_block
-        cells = []
-        
+        if self.next_block >= 0:
+            y += CELL_SIZE
+            i = self.next_block
+            dy = 32
+            dx = 32
+            y += 16
+            r = self.draw_item(y,i,self.field.cell_size).inflate(dx,dy)
+            r.top  -= dy/4 
+            r.left -= dx/4
+            self.draw_box_caption("Next",self.small_text_font,r)
+            return r
+        return None
+
+    def drawItemsTotals(self,r):
+        y = r.bottom
+        y += 16
+        cell_size = 12
+        y_min = y
+        width = 0
+        for i in range(7):
+            count = self.items_counts[i]
+            y += 12
+            r = self.draw_item(y,i,cell_size)
+            t = self.small_text_font.render(f"{count}",1, BLACK)
+            tw = t.get_width()
+            self.screen.blit(t,(r.right,r.centery))
+            y = r.bottom + 4
+            if width < r.width:
+                width = r.w
+            
+        width += tw 
+        width += 40
+
+        x = self.info_rect.left + (self.info_rect.width - width) // 2
+
+        r = pygame.Rect(x,y_min,width,y - y_min)
+        self.draw_box_caption("Item counts",self.small_text_font,r)
+        return y
+   
+    def draw_item(self,y,i,cell_size):
+        cells = [] 
         if i == 0:
             cells = BlockI.CELLS[0]
         elif i == 1:
@@ -426,23 +467,29 @@ class Game:
         elif i == 6:
             cells = BlockZ.CELLS[0]
 
+
         yMax = 0
         xMax = 0
         for (r,c) in cells:
-            xd = c * CELL_SIZE
-            yd = r * CELL_SIZE
+            xd = c * cell_size
+            yd = r * cell_size
             if yd > yMax:
                 yMax = yd
             if xd > xMax:
                 xMax = xd
-        
+
         x = self.info_rect.left + (self.info_rect.width - xMax) // 2
+        
         for (r,c) in cells:
-            xd = x + c * CELL_SIZE
-            yd = y + r * CELL_SIZE
-            pygame.draw.rect(self.screen, COLORS[i],(xd,yd,CELL_SIZE,CELL_SIZE))
-            pygame.draw.rect(self.screen, BLOCK_BORDER,(xd,yd,CELL_SIZE,CELL_SIZE),1)
-        return yMax + y      
+            xd = x + c * cell_size
+            yd = y + r * cell_size
+            pygame.draw.rect(self.screen, COLORS[i]   ,(xd,yd,cell_size,cell_size))
+            pygame.draw.rect(self.screen, BLOCK_BORDER,(xd,yd,cell_size,cell_size),1)  
+            
+
+        return pygame.Rect(x,y,xMax+cell_size,yMax + cell_size)      
+
+   
 
     def draw_summary(self,y):
         source= f"""
@@ -510,8 +557,16 @@ Space - Hard drop
         self.screen.blit(text_surf,text_rect)     
         text_rect = text_rect.inflate(20,16)
         #text_rect = text_rect.move(0,8)
-        pygame.draw.rect(self.screen,(240,240,240), text_rect,5,10)
+        pygame.draw.rect(self.screen,INFO_BORDER_COLOR, text_rect,INFO_BORER_SIZE,INFO_BORER_RADIUS)
         return y + text_surf.get_height()
+
+    def draw_box_caption(self,caption,fnt,rect):        
+        if fnt == None:
+            text_surf = self.info_text_font.render(caption,1,TEXT_COLOR) 
+        else:
+            text_surf = fnt.render(caption,1,TEXT_COLOR) 
+        draw_box_with_label(self.screen,rect,text_surf,INFO_BORDER_COLOR)
+
 
     def draw_settings(self):
         for c in self.setting_contols:
@@ -537,8 +592,10 @@ Space - Hard drop
         if self.is_play_mode:
             y = self.draw_summary(self.info_rect.top + CELL_SIZE)
             y += CELL_SIZE
-            y = self.drawPreview(y)
+            r = self.drawPreview(y)        
             if self.is_paused:
+                if r != None:
+                    y = r.bottom
                 y += 4 * CELL_SIZE
                 pause_text = """
 Game is paused
@@ -550,6 +607,8 @@ Click any other key
    to resume play
 """
                 self.draw_text(pause_text,y,self.big_text_font)
+            elif r != None:
+                y = self.drawItemsTotals(r)
    
             y = self.info_rect.bottom - 20
             self.draw_text_border(f'{round(self.elapsed_time)}'.strip(),y)
@@ -679,9 +738,11 @@ Click any other key
  but now it's time to say
  Goodbye  
          """
+        font_size = 24
         if self.total_plays == 0:
             source = "Goodbye"
-        fade_font  = pygame.font.SysFont(FONTS, 24,bold=True,italic = True )
+            font_size = 40
+        fade_font  = pygame.font.SysFont(FONTS, font_size,bold=True,italic = True )
         fade_surface = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
         fade_surface_rect = fade_surface.get_rect()
   

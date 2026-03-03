@@ -22,11 +22,12 @@ SIZES = {
     2:f'Large  {COLS}x{ROWS}'
 }
 
-BACKGROUNDS = ['None','Cat','Dog']
-
 CELL_SIZE:Final[int]= 16
 INFO_CELLS_WIDTH    = 16
-WINDOW_WIDTH  = (COLS +  INFO_CELLS_WIDTH) * CELL_SIZE
+INFO_X = COLS * CELL_SIZE + CELL_SIZE
+INFO_Y = CELL_SIZE
+
+WINDOW_WIDTH  = INFO_X +  INFO_CELLS_WIDTH * CELL_SIZE
 WINDOW_HEIGHT = (ROWS+2) * CELL_SIZE
 
 #Colors
@@ -48,6 +49,9 @@ BK                = (250,250,250)
 BLOCK_BORDER      = (212,212,212)
 PROJECTTION_COLOR = (137,127,127)
 TEXT_COLOR        = BLACK
+INFO_BORDER_COLOR = BLACK #(240,240,240)
+INFO_BORER_SIZE   = 5
+INFO_BORER_RADIUS = 10
 
 COLORS = {
     0: CYAN,       #I
@@ -68,7 +72,6 @@ DATA_FOLDER  :Final[str] = "data"
 ASSET_FOLDER :Final[str] = "assets"
 BK_FOLDER    :Final[str] = "background"
 
-
 SETTINGS_FILE = "tetris.ini"
 SECTION_GENERAL="general"
 KEY_SOUND="sound"
@@ -81,4 +84,3 @@ KEY_HIGHT_LEVEL = "high_level"
 KEY_HIGHT_SCORE = "high_score"
 KEY_AVG_LEVEL   = "avg_level"
 KEY_AVG_SCORE   = "avg_score"
-
