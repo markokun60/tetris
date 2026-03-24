@@ -1,9 +1,9 @@
 from typing import Final
 
 #Apps
-VERSION :Final[str] = "1.0.0"
+VERSION :Final[str] = "1.1.0"
 AUTHOR  :Final[str] = "Mark Okun"
-APP_NAME:Final[str]= "Tetris"
+APP_NAME:Final[str] = "Tetris"
 
 ROWS:Final[int] = 36
 COLS:Final[int] = 20
@@ -17,8 +17,8 @@ S_COLS:Final[int] = 10
 COLS_ROWS = [(S_COLS,S_ROWS),(M_COLS,M_ROWS),(COLS,ROWS)]
 
 SIZES = {
-    0:f'Small  {S_COLS}x{S_COLS}',
-    1:f'Medium {M_COLS}x{M_COLS}',
+    0:f'Small  {S_COLS}x{S_ROWS}',
+    1:f'Medium {M_COLS}x{M_ROWS}',
     2:f'Large  {COLS}x{ROWS}'
 }
 
@@ -63,24 +63,28 @@ COLORS = {
     6: PURPLE ,    #Z    
 }
 
-
 SCORES = [40,100,300,1200]
 
 FONTS:Final[str]= 'monospace' #'Arial, Helvetica, sans-serif'
-FOLDER_SOUNDS:Final[str] = "sounds"
+
 DATA_FOLDER  :Final[str] = "data"
 ASSET_FOLDER :Final[str] = "assets"
+SOUND_FOLDER :Final[str] = "sounds"
+IMAGE_FOLDER :Final[str] = "images"
 BK_FOLDER    :Final[str] = "background"
 
-SETTINGS_FILE = "tetris.ini"
-SECTION_GENERAL="general"
-KEY_SOUND="sound"
-KEY_BK_MUSIC="bk_music"
-KEY_SIZE ="size"
-KEY_BK   ="background"
+SETTINGS_FILE   = "tetris.ini"
+SECTION_GENERAL = "general"
+KEY_SOUND       = "sound"
+KEY_BK_MUSIC    = "bk_music"
+KEY_SIZE        = "size"
+KEY_BK          = "background"
+KEY_USER_NAME   = 'user'
 
 KEY_TOTAL_GAMES = "total_games"
 KEY_HIGHT_LEVEL = "high_level"
 KEY_HIGHT_SCORE = "high_score"
 KEY_AVG_LEVEL   = "avg_level"
 KEY_AVG_SCORE   = "avg_score"
+
+IS_DEBUG = True

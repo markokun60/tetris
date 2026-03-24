@@ -38,6 +38,7 @@
     <Compile Include="controls\checkbox.py" />
     <Compile Include="controls\checkGroup.py" />
     <Compile Include="controls\controls.py" />
+    <Compile Include="controls\label.py" />
     <Compile Include="controls\textBox.py" />
     <Compile Include="controls\__init__.py" />
     <Compile Include="field.py" />

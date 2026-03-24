@@ -8,17 +8,17 @@ class Checkbox(Control):
     CHECK_SIZE = 16 
     CHECK_MARK = [ (3,8),(6, 11),(12,4)]
     DX = 4
-    def __init__(self, position: Tuple[float, float] = (0, 0),text: str='' ,
-                checked: bool = False,name = ''):
+    def __init__(self, name,position: Tuple[float, float] = (0, 0),text: str='' ,
+                checked: bool = False):
         "A basic checkbox."
-        super().__init__(None,16,None,text)
+        super().__init__(name,None,Control.FONT_SIZE,None,text)
 
         self.checked: bool = checked
         self.rect = pygame.Rect(position[0], position[1], self.CHECK_SIZE, self.CHECK_SIZE)
-        self.name = self.text if text == '' else name
+
         self.is_auto_check = True
 
-    def update(self, mousedown: bool, position: Tuple[float, float]):
+    def update(self, mousedown: bool, is_left_mouse:bool, is_double_click:bool,position: Tuple[float, float]):
         if mousedown and self.rect.collidepoint(position):
             if self.is_auto_check:
                 self.checked = not self.checked

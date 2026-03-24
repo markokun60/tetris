@@ -8,11 +8,11 @@ class Button(Control):
     CLR_BTN      = (220, 220, 220)
     CLR_BTN_CHNG = (255, 0, 0)
     BTN_RADIUS   = 5
-  
 
-    def __init__(self, position, size, clr=None, cngclr=None, hint_clr=None, func=None, text='',
-                font_name=None, font_size=16, font_clr=[0, 0, 0], image = None):
-        super().__init__(font_name,font_size,func,text)
+    
+    def __init__(self, name,position, size, clr=None, cngclr=None, hint_clr=None, func=None, text='',
+                font_name=None, font_size=Control.FONT_SIZE,  image = None):
+        super().__init__(name,font_name,font_size,func,text)
         if clr == None:
             self.clr = self.CLR_BTN
         else:
@@ -33,7 +33,6 @@ class Button(Control):
             self.surf.set_alpha(clr[3])
 
         # text         
-        self.font_clr = font_clr
         self.txt_rect = self.txt_surf.get_rect(center=[wh//2 for wh in self.size])
         
         #hints
@@ -109,7 +108,7 @@ class Button(Control):
                 self.set_hint(self.hint)
             screen.blit(self.hint_surf, (self.rect.x + 8,self.rect.bottom))
     
-    def update(self, mousedown: bool, position: Tuple[float, float]):
+    def update(self, mousedown: bool,is_left_mouse:bool, is_double_click:bool, position: Tuple[float, float]):
         self.curclr = self.clr
         if self.rect.collidepoint(position):
             if mousedown:

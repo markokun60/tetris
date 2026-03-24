@@ -26,7 +26,7 @@ class CheckGroup:
         for choice in options:
             checked = True if i == cur_choice else False
             y += self.DY
-            chk = Checkbox((x,y),choice,checked,f'{name}_{i}')
+            chk = Checkbox(f'{name}_{i}',(x,y),choice,checked)
             chk.is_auto_check = False
             chk.func = self.on_select
             self.chk_boxes.append(chk)
