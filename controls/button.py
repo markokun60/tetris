@@ -4,27 +4,33 @@ from   controls.controls import Control
 
 class Button(Control):
     CLR_BTN_RADIUS   = 5
-
-    CLR_BTN      = (220, 220, 220)
-    CLR_BTN_CHNG = (255, 0, 0)
+    CLR_BTN_TEXT = (0,0,0)
     BTN_RADIUS   = 5
+ 
+    def __init__(self, name,position, size, clr=None, cngclr=None, hint_clr=None, func=None, text='',font_name=None, font_size=None,  image = None):
 
-    
-    def __init__(self, name,position, size, clr=None, cngclr=None, hint_clr=None, func=None, text='',
-                font_name=None, font_size=Control.FONT_SIZE,  image = None):
-        super().__init__(name,font_name,font_size,func,text)
+        super().__init__(name,Control.BUTTON,font_name,font_size,func,text,Button.CLR_BTN_TEXT,hint_clr)
+        self.image  = image
+
+        if  size[0] == 0:
+            w = self.txt_surf.get_width()+ 16
+            if self.image != None:
+                w += self.image.get_width()
+            self.size = (w,size[1])
+        else:
+            self.size   = size    
+
         if clr == None:
             self.clr = self.CLR_BTN
         else:
             self.clr = clr
-        self.size   = size
-        self.surf   = pygame.Surface(size)
-        self.surf1  = pygame.Surface(size)
+      
+        self.surf   = pygame.Surface(self.size)
+        self.surf1  = pygame.Surface(self.size)
         self.rect   = self.surf.get_rect(center=position)
-        self.image  = image
- 
+      
         if cngclr == None:
-            self.cngclr = self.CLR_BTN_CHNG
+            self.cngclr = Control.CLR_BTN_CHNG
 
         if self.cngclr == None:
             self.cngclr = self.clr
@@ -32,43 +38,23 @@ class Button(Control):
         if len(self.clr) == 4:
             self.surf.set_alpha(clr[3])
 
-        # text         
-        self.txt_rect = self.txt_surf.get_rect(center=[wh//2 for wh in self.size])
-        
-        #hints
-        self.show_hint = False
-        self.hint     = ''
-        self.hint_surf= None
-        if hint_clr == None:
-            self.hint_clr = self.CLR_HINT
-        else:
-            self.hint_clr = hint_clr
-      
+        self.txt_rect = self.txt_surf.get_rect(center=[wh//2 for wh in self.size]) 
         self.pressed  = False
 
         self.draw_surface(self.surf ,self.clr)
         self.draw_surface(self.surf1,self.cngclr)
     
     def reset(self):
-        self.clr      = self.CLR_BTN
-        self.cngclr   = self.CLR_BTN_CHNG
-        self.hint_clr = self.CLR_HINT
+        super().reset()
+        self.clr      = Control.CLR_BTN
+        self.cngclr   = Control.CLR_BTN_CHNG
+        self.hint_clr = Control.CLR_HINT
         if self.cngclr == None:
             self.cngclr = self.clr
 
         self.hint_surf= None
         self.draw_surface(self.surf ,self.clr)
         self.draw_surface(self.surf1,self.cngclr)
-
-
-    def set_hint(self,hint):
-        self.hnt = hint
-        if  self.hint_surf == None:
-            font_size =  self.font_size - 4
-            font_hint = pygame.font.SysFont(self.font_name,font_size)
-            self.hint_surf = font_hint.render(self.hint, 1,  self.hint_clr)
-        else:
-            self.hint_surf = font_hint.render(self.hint, 1, self.hint_clr)
 
     def draw_surface(self, surf, curclr):
         rect = pygame.Rect(0,0,self.rect.width,self.rect.height)
@@ -88,7 +74,6 @@ class Button(Control):
     def draw(self, screen):  
         #print(self.rect,self.txt)
         if self.mouseover():
-            mouse_pos = pygame.mouse.get_pos()
             if pygame.mouse.get_pressed()[0]:
                 r = self.rect.copy()
                 r.x += 2;
@@ -98,24 +83,24 @@ class Button(Control):
                 screen.blit(self.surf1, self.rect)
                 if self.show_hint : 
                     self.draw_hint(screen)
+            #self.setActive(True)        
         else:
             screen.blit(self.surf, self.rect)
+            #if self.active:
+            #    pygame.draw.rect(screen,Control.CLR_SELECTED,self.rect,1)
         return self.rect.bottom         
       
-    def draw_hint(self,screen):
-        if len(self.hint) > 0 :
-            if self.hint_surf == None:
-                self.set_hint(self.hint)
-            screen.blit(self.hint_surf, (self.rect.x + 8,self.rect.bottom))
     
-    def update(self, mousedown: bool,is_left_mouse:bool, is_double_click:bool, position: Tuple[float, float]):
+    def handle_event(self, event,is_left_mouse:bool, is_double_click:bool, position: Tuple[float, float]):
         self.curclr = self.clr
-        if self.rect.collidepoint(position):
-            if mousedown:
-                self.curclr = self.cngclr
-            else:
-                self.call_back()
-            return True
+        if is_left_mouse:
+            if self.rect.collidepoint(position):
+                self.setActive(True)
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    self.curclr = self.cngclr
+                else:
+                    self.call_back()
+                return True
         return False
 
     def mouseover(self):

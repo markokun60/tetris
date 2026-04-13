@@ -25,4 +25,4 @@ pip install pyinstaller
 
 create exe
 --------------
-pyinstaller --name pyTetris  --onefile -w --icon=tetris.ico --add-data "assets:assets" main.py  
+pyinstaller --name pyTetris  --onefile -w --icon=tetris.ico --add-data "assets:assets" --add-data "resources:resources"  main.py  

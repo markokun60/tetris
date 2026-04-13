@@ -220,5 +220,6 @@ __marimo__/
 #Windows
 *.bat
 *.lnk
+*.zip
 snake  py
 

@@ -1,0 +1,13 @@
+ESC        - Pause
+Left  or A - Move left
+Right or D - Move right
+Up    or W - Rotate right
+Z          - Rotate left
+Space - Hard drop
+
+Score values:
+---------------
+Single :  40 * level
+Double : 100 * level
+Triple : 300 * level
+Tetris : 1200* level

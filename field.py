@@ -1,4 +1,5 @@
 import pygame 
+import random
 from math import ceil
 from settings import * 
 from lib      import scale_image_keep_ratio
@@ -52,6 +53,18 @@ class Field():
             for c in range(self.cols):  
                 self.grid[r][c] = 0
         
+    def fill_garbage(self,size):
+       n = round(size * self.cols * 0.75)
+       colors = len(COLORS)-1
+       for i in range(n):
+           r = random.randint(0,size-1)
+           c = random.randint(0,self.cols-1)
+           clr = random.randint(0,colors) 
+           row = self.rows - 1 - r
+           self.grid[row][c] = clr
+
+
+
     def is_row_full(self,row):
         for c in range(self.cols):
             if self.grid[row][c] == 0:
@@ -86,7 +99,6 @@ class Field():
 
 
     def draw_background(self):
-       
         if self.imgBK != None:
             x = (self.width -  self.imgBK.get_width()) //2
             y = (self.height - self.imgBK.get_height())/2

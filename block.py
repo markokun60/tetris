@@ -20,6 +20,9 @@ class Block:
             self.images[i] = image
 
         self._current_values()
+
+    def get_name(self):
+        return  ITEMS_MAME[self.id-1]
      
     def _current_values(self):
         self.cells = self.all_cells[self.rotation_state]
@@ -45,8 +48,7 @@ class Block:
                 min_col = c
 
         return max_row,max_col,min_row,min_col            
-     
-   
+        
     def turn(self):
         if len(self.all_cells) == 1:
             return

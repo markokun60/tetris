@@ -1,7 +1,7 @@
 from typing import Final
 
 #Apps
-VERSION :Final[str] = "1.1.0"
+VERSION :Final[str] = "1.2.0"
 AUTHOR  :Final[str] = "Mark Okun"
 APP_NAME:Final[str] = "Tetris"
 
@@ -44,13 +44,12 @@ WHITE    = (255,255,255)
 BLACK    = (  0,  0,  0)
 PURPLE   = (128, 0 ,128)   
 
-
 BK                = (250,250,250)
 BLOCK_BORDER      = (212,212,212)
 PROJECTTION_COLOR = (137,127,127)
 TEXT_COLOR        = BLACK
 INFO_BORDER_COLOR = BLACK #(240,240,240)
-INFO_BORER_SIZE   = 5
+INFO_BORER_SIZE   = 4
 INFO_BORER_RADIUS = 10
 
 COLORS = {
@@ -60,8 +59,11 @@ COLORS = {
     3: RED   ,     #J
     4: ORANGE,     #L
     5: GREEN ,     #S
-    6: PURPLE ,    #Z    
+    6: PURPLE      #Z    
 }
+TOTAL_ITEMS:Final[int] = 7
+
+ITEMS_MAME = ['I','O','T','J','L','S','Z']
 
 SCORES = [40,100,300,1200]
 
@@ -72,6 +74,7 @@ ASSET_FOLDER :Final[str] = "assets"
 SOUND_FOLDER :Final[str] = "sounds"
 IMAGE_FOLDER :Final[str] = "images"
 BK_FOLDER    :Final[str] = "background"
+RESOURCES    :Final[str] = "resources" 
 
 SETTINGS_FILE   = "tetris.ini"
 SECTION_GENERAL = "general"
@@ -80,6 +83,9 @@ KEY_BK_MUSIC    = "bk_music"
 KEY_SIZE        = "size"
 KEY_BK          = "background"
 KEY_USER_NAME   = 'user'
+KEY_PREVIEW_SIZE= "preview"
+KEY_GARBAGE     = "garbage"
+KEY_HOLD        = "hold"
 
 KEY_TOTAL_GAMES = "total_games"
 KEY_HIGHT_LEVEL = "high_level"
@@ -88,3 +94,8 @@ KEY_AVG_LEVEL   = "avg_level"
 KEY_AVG_SCORE   = "avg_score"
 
 IS_DEBUG = True
+
+MODE_INFO     = 0
+MODE_ABOUT    = 1
+MODE_HELP     = 2
+MODE_SETTINGS = 3

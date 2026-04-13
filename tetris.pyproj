@@ -33,17 +33,24 @@
     </Interpreter>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ai\__init__.py" />
     <Compile Include="block.py" />
     <Compile Include="controls\button.py" />
     <Compile Include="controls\checkbox.py" />
     <Compile Include="controls\checkGroup.py" />
+    <Compile Include="controls\combobox.py" />
     <Compile Include="controls\controls.py" />
+    <Compile Include="controls\form.py" />
     <Compile Include="controls\label.py" />
+    <Compile Include="controls\listbox.py" />
+    <Compile Include="controls\slider.py" />
     <Compile Include="controls\textBox.py" />
     <Compile Include="controls\__init__.py" />
     <Compile Include="field.py" />
+    <Compile Include="forms.py" />
     <Compile Include="lib.py" />
     <Compile Include="main.py" />
+    <Compile Include="resources\__init__.py" />
     <Compile Include="settings.py" />
   </ItemGroup>
   <ItemGroup>
@@ -56,6 +63,7 @@
     <Content Include="assets\start.png" />
     <Content Include="assets\tetris.gif" />
     <Content Include="readme.txt" />
+    <Content Include="resources\help.txt" />
     <Content Include="Sounds\clear.ogg" />
     <Content Include="sounds\exit.mp3" />
     <Content Include="Sounds\music.ogg" />
@@ -67,6 +75,8 @@
     <Folder Include="assets\" />
     <Folder Include="assets\background\" />
     <Folder Include="controls\" />
+    <Folder Include="ai\" />
+    <Folder Include="resources\" />
     <Folder Include="Sounds\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />

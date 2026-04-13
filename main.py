@@ -1,3 +1,4 @@
+from re import S
 from turtle import right
 import pygame
 import random
@@ -5,17 +6,15 @@ import os
 import time
 import sys
 import configparser
+from importlib.resources import files
+
 
 from field      import Field
 from block      import *
 from settings   import *
-from controls.button     import Button
-from controls.checkbox   import Checkbox
-from controls.checkGroup import CheckGroup
-from controls.textBox    import InputBox 
-from controls.label      import Label 
-from controls.controls   import Control,handle_controls_events
-from lib                 import * 
+from forms      import MainForm,FormOptions
+from lib        import * 
+from controls.controls   import *
 
 class GameSummary:
     def __init__(self):
@@ -26,12 +25,7 @@ class GameSummary:
         self.avg_score     = 0.0
 
 class Game:
-    ABOUT_IMAGE = "tetris.gif"
-
-    MODE_INFO     = 0
-    MODE_ABOUT    = 1
-    MODE_HELP     = 2
-    MODE_SETTINGS = 3
+    ABOUT_IMAGE = "tetris.png"
 
     Y_FROM_BOTTOM_FOR_BOX_TIME = 20
     MAX_FPS_GROW_LEVEL = 29
@@ -39,7 +33,6 @@ class Game:
     FAST_FPS = 20
     FPS_LEVEL_VELOCITY = 1
     ROWS_PER_LEVEL = 10
-
 
     def __init__(self):
         pygame.init()
@@ -58,7 +51,9 @@ class Game:
         self.running    = True
         self.score      = 0
         self.block      = None
-        self.next_block = -1
+        self.next_block_size = 1
+        self.next_blocks  = []
+        self.garbage_rows = 0
 
         self.total_items= 0
         self.total_rows = 0
@@ -77,10 +72,14 @@ class Game:
         self.info_text_font = pygame.font.SysFont(FONTS, 16,bold=True)
         self.small_text_font= pygame.font.SysFont(FONTS, 14,bold=True,italic = True)
       
-        self.projection = None
-        self.is_sound = True
+        self.projection   = None
+        self.is_sound     = True
         self.is_background_music = False
         self.is_play_mode = False
+        self.is_hold      = False
+
+        self.is_lock_delay= False
+        self.lock_time = None
 
         self.size_index = 0
         self.bk_index   = 0
@@ -94,8 +93,7 @@ class Game:
         self.set_field_size()
 
         #self.field_rect= pygame.Rect(0,0,x,WINDOW_HEIGHT)
-        self.info_rect = pygame.Rect(INFO_X,INFO_Y, INFO_CELLS_WIDTH *CELL_SIZE, WINDOW_HEIGHT - INFO_Y * 2) 
-     
+        self.info_rect = pygame.Rect(INFO_X,INFO_Y, INFO_CELLS_WIDTH *CELL_SIZE, WINDOW_HEIGHT - INFO_Y * 2)  
         #
         self.rotate_sound    = pygame.mixer.Sound(os.path.join(self.resource_folder,SOUND_FOLDER,"rotate.ogg"))
         self.clear_row_sound = pygame.mixer.Sound(os.path.join(self.resource_folder,SOUND_FOLDER,"clear.ogg"))
@@ -107,13 +105,9 @@ class Game:
         self.game_music = None    
      
         Control.BK  = BK
-
-        self.buttons = []
-        self.create_buttons()
-
-        self.setting_contols = []
-        self.create_setting_controls()
-
+        self.main_form     = MainForm(self.field,self)
+        self.setting_form  = FormOptions(self)
+    
         self.start_time = time.time()
         self.total_plays = 0
 
@@ -121,8 +115,15 @@ class Game:
         self.prompt_time = time.time()
 
         self.items_counts = [0,0,0,0,0,0,0,0]     
-        self.mode = self.MODE_INFO
+        self.mode = MODE_INFO
   
+    def set_defalut(self):
+        self.is_sound        = True
+        self.is_background_music = True
+        self.next_block_size = 1
+        self.garbage_rows    = 0
+        self.is_hold         = False
+
     def start_game_music(self):
         if self.is_background_music:
             if self.game_music == None:
@@ -146,147 +147,7 @@ class Game:
         self.field.backgroundImage = self.background_img[self.bk_index]      
         (cols,rows) = COLS_ROWS[self.size_index]
         self.field.set_sizes(rows,cols)
-
-    def sound_from_settings(self,source):
-        self.is_sound = self.chk_sound.checked
-
-    def bk_music_from_settings(self,source):
-        self.is_background_music = self.chk_mk_music.checked
-
-    def set_user_name(self,un):
-        self.user_name = un
-
-    def create_setting_controls(self):
-        x = self.info_rect.left + CELL_SIZE * 4 
-        y = self.buttons[0].rect.bottom + CELL_SIZE 
-
-        self.chk_sound = Checkbox('chkSound',(x,y),"Sound",self.is_sound)
-        self.chk_sound.func = self.sound_from_settings
-        self.chk_sound.hide = True
-        self.setting_contols.append(self.chk_sound)
-        y = self.chk_sound.rect.bottom
-        y += 4
-
-        self.chk_mk_music = Checkbox('chekMusic',(x,y),"Backround music",self.is_background_music)
-        self.chk_mk_music.func = self.bk_music_from_settings
-        self.chk_mk_music.hide = True
-        self.setting_contols.append(self.chk_mk_music)
-        y = self.chk_mk_music.rect.bottom
-
-        y += CELL_SIZE * 2
-        sizes = []
-        for key in SIZES.keys():
-            sizes.append(SIZES[key])
-        self.sizeGroup = CheckGroup(sizes,self.size_index,x,y,"Sizes")
-
-        for chk in self.sizeGroup.chk_boxes:
-            chk.hide = True
-            self.setting_contols.append(chk)
-
-        y = self.sizeGroup.rect.bottom
-        y += 16
-        self.bkGroup = CheckGroup(self.background,self.bk_index,x,y,"Background")
-
-        for chk in self.bkGroup.chk_boxes:
-            chk.hide = True
-            self.setting_contols.append(chk)
-
-        y = self.bkGroup.rect.bottom
-        y += 16
-        self.label = Label('lblName',(x,y),"Your name:")
-        self.txtName = InputBox('txtName',x + self.label.get_width() + 10,y,80,18,self.user_name)
-        self.txtName.func = self.set_user_name
-        self.setting_contols.append(self.label)
-        self.setting_contols.append(self.txtName)
-
-    def create_buttons(self):
-        W_BUTTON = 116
-        H_BUTTON = 48
-        D_H = 18
-
-        x_button = self.info_rect.left + (self.info_rect.width -  W_BUTTON)//2 + W_BUTTON/2
-        y_button = self.field.yTop + H_BUTTON // 2
-
-        imgBack = pygame.image.load(os.path.join(self.resource_folder,IMAGE_FOLDER, 'cancel.png')).convert_alpha()
-        btnBack = Button('btnBack',position=(x_button, y_button),  size=(W_BUTTON, H_BUTTON),  func=self.back, text='Back',image=imgBack)
-        btnBack.hide  = True
-        btnBack.hint  = "Back to main menu" 
-        self.buttons.append(btnBack)
-
-        imgStart = pygame.image.load(os.path.join(self.resource_folder,IMAGE_FOLDER,'start.png')).convert_alpha()
-        btnStart = Button('btnStart',position=(x_button, y_button), size=(W_BUTTON, H_BUTTON), func= self.start, text='Start',image = imgStart)
-        btnStart.hint  = "Start play the game"
-        self.buttons.append(btnStart)
-
-        y_button += H_BUTTON
-        y_button += D_H
-        imgAbout = pygame.image.load(os.path.join(self.resource_folder,IMAGE_FOLDER, Game.ABOUT_IMAGE)).convert_alpha()
-        btnAbout = Button('btnAbout',position=(x_button, y_button), size=(W_BUTTON, H_BUTTON), func=self.about, text='About',image=imgAbout)
-        btnAbout.hint  = "Show about information"
-        self.buttons.append(btnAbout)
-       
-        y_button += H_BUTTON
-        y_button += D_H
-        imgHelp  = pygame.image.load(os.path.join(self.resource_folder,IMAGE_FOLDER,"help.png")).convert_alpha()
-        btnHelp  = Button('btnHelp',position=(x_button, y_button), size=(W_BUTTON, H_BUTTON), func=self.help, text='Help',image=imgHelp)
-        btnHelp.hint  = "Show help information"
-        self.buttons.append(btnHelp)
-     
-        y_button += H_BUTTON
-        y_button += D_H
-        imgOptions  = pygame.image.load(os.path.join(self.resource_folder,IMAGE_FOLDER,"options.png")).convert_alpha()
-        btnOptions  = Button('btnOptions',position=(x_button, y_button), size=(W_BUTTON, H_BUTTON), func=self.change_settings, text='Settings',image=imgOptions)
-        btnOptions.hint  = "Change settings"
-        self.buttons.append(btnOptions)
-  
-        y_button += H_BUTTON
-        y_button += D_H
-        imgExit  = pygame.image.load(os.path.join(self.resource_folder,IMAGE_FOLDER,'exit.png')).convert_alpha()
-        btnExit  = Button('btnExit',position=(x_button, y_button), size=(W_BUTTON, H_BUTTON), func=self.exit_game, text='Exit',image=imgExit)
-        btnExit.hint  = "Exit the game"
-        self.buttons.append(btnExit)
-        
-    def back(self):
-        if self.mode == self.MODE_SETTINGS:
-            f = False
-            bk_index = self.bkGroup.selected_index
-            if self.bk_index != bk_index:
-                f = True
-                self.bk_index = bk_index
-            
-
-            if self.size_index != self.sizeGroup.selected_index:
-                self.size_index = self.sizeGroup.selected_index
-                f = True
-            
-            if f: self.set_field_size() 
-
-        self.mode = self.MODE_INFO
-        self.hide_show_buttins()
-
-    def about(self):
-        self.mode = self.MODE_ABOUT
-        self.hide_show_buttins()
-
-    def help(self):
-        self.mode = self.MODE_HELP
-        self.hide_show_buttins()
-
-    def change_settings(self):
-        self.mode = self.MODE_SETTINGS
-        self.hide_show_buttins()
-
-    def hide_show_buttins(self):
-        for b in self.buttons:
-            b.reset()
-            b.hide = not b.hide
- 
-        for c in self.setting_contols:
-            if self.mode == self.MODE_SETTINGS:
-                c.hide = False
-            else:
-                c.hide = True
-
+    
     def set_prompt(self,txt):
         self.prompt = txt
         self.prompt_time = time.time()
@@ -305,24 +166,22 @@ class Game:
             if now - self.prompt_time > 3:
                 self.prompt = ""
 
-    def draw_buttons(self):
-        y = 0
-        for b in self.buttons:
-            if not b.hide:
-                yb = b.draw(self.screen)
-                if y < yb:
-                    y = yb
-        return y
-
     def start(self):
         self.level_rows =  0
         self.level      =  0
-        self.next_block = -1
+        self.next_blocks.clear()
         self.total_items=  0
         self.total_rows =  0
         self.projection = None
-        
+        self.hold_item  = None
+  
         self.field.reset()
+        if self.garbage_rows > 0:
+            self.field.fill_garbage(self.garbage_rows)
+
+        for i in range(TOTAL_ITEMS):
+            self.items_counts[i] = 0
+
         self.create_block()
 
         self.start_time = time.time()
@@ -336,15 +195,12 @@ class Game:
         if not self.start_game_music() :         
             if self.is_sound:
                 self.start_sound.play()
-            
-        for i in range(7):
-            self.items_counts[i] = 0
                 
     def game_over(self): 
         if self.game_music != None:
             self.game_music.stop()
 
-        self.set_prompt("You lost the game")
+        self.set_prompt("The game is over")
         self.is_play_mode = False  
         summary = self.summary[self.size_index]
         
@@ -366,10 +222,6 @@ class Game:
         summary.avg_score = aScore / summary.total_games
         if self.is_sound:
             self.loss_sound.play()
-   
-
-    def exit_game(self):
-        self.running = False
 
     def next_level(self):
         self.level_rows = 0
@@ -396,13 +248,14 @@ class Game:
 
     def create_block(self):
         n = 6
-        if self.next_block >= 0:
-            i = self.next_block
-        else:
+        while len(self.next_blocks) <= self.next_block_size:
             i = random.randint(0,n)
+            self.next_blocks.append(i)
+
+        i = self.next_blocks.pop(0)
             
         cell_size = self.field.cell_size
-        self.next_block = random.randint(0,n)
+       
         if i == 0:
             self.block = BlockI(cell_size)
         elif i == 1:
@@ -429,22 +282,57 @@ class Game:
             self.total_items += 1
             self.items_counts[i] += 1
 
-    def drawPreview(self,y):
-        if self.next_block >= 0:
-            y += CELL_SIZE
-            i = self.next_block
-            dy = 32
-            dx = 32
-            y += 16
-            r = self.draw_item(y,i,self.field.cell_size).inflate(dx,dy)
-            r.top  -= dy/4 
-            r.left -= dx/4
-            self.draw_box_caption("Next",self.small_text_font,r)
-            return r
-        return None
+    def hold(self):
+        if self.hold_item == None:
+            self.hold_item = self.block
+            self.create_block()
+        else:
+            temp = self.block
+            self.block = self.hold_item
+            self.hold_item = temp
+            
+        if self.is_sound:
+            self.rotate_sound.play()
 
-    def drawItemsTotals(self,r):
-        y = r.bottom
+    def draw_hold(self,y):
+        size = 16
+        if self.hold_item != None:
+            r = self.draw_item(y +12,self.hold_item.id-1,size)
+        
+            r.width  += 2 * size
+            r.left = self.info_rect.left + (self.info_rect.width - r.width) // 2
+            r.height += size
+            r.top    = y
+        else:
+            width = size * 4+12
+            left = self.info_rect.left + (self.info_rect.width -  width) // 2
+            r = pygame.Rect(left,y,width,size * 2)
+            r.top  = y
+
+        self.draw_box_caption("Hold",self.small_text_font,r)
+        return r.bottom
+
+    def drawPreview(self,y):
+        if len(self.next_blocks) == None:
+            return y
+        size  = 16
+        width = 0
+        top   = y
+        for i in self.next_blocks:   
+            y += 12
+            r = self.draw_item(y,i,size)
+            y = r.bottom
+            if width < r.width:
+                width = r.width
+   
+        r.width  = width + size + size
+        r.height = r.bottom - top + size
+        r.top    = top 
+        r.left   = self.info_rect.left + (self.info_rect.width - r.width) // 2
+        self.draw_box_caption("Next",self.small_text_font,r)
+        return r.bottom
+
+    def drawItemsTotals(self,y):
         y += 16
         cell_size = 12
         y_min = y
@@ -469,7 +357,7 @@ class Game:
         self.draw_box_caption("Item counts",self.small_text_font,r)
         return y
    
-    def draw_item(self,y,i,cell_size):
+    def draw_item(self,y:int,i:int,cell_size:int):
         cells = [] 
         if i == 0:
             cells = BlockI.CELLS[0]
@@ -506,7 +394,6 @@ class Game:
             
         return pygame.Rect(x,y,xMax+cell_size,yMax + cell_size)      
 
-
     def draw_summary(self,y):
         source= f"""
 Items: {self.total_items}
@@ -540,14 +427,8 @@ Avg   score: {round(summary.avg_score,2)}
         return self.draw_text(source,y,self.small_text_font)  
     
     def draw_help(self,y):
-        source= f"""
-ESC        - Pause
-Left  or A - Move left
-Right or D - Move right
-Up    or W - Rotate
-S          - Reverse rotate
-Space - Hard drop
-"""     
+        source = files(RESOURCES).joinpath('help.txt').read_text(encoding='utf-8')
+
         return self.draw_text(source,y,self.small_text_font)  
 
     def draw_text(self,source,y,fnt = None):
@@ -584,11 +465,12 @@ Space - Hard drop
         draw_box_with_label(self.screen,rect,text_surf,INFO_BORDER_COLOR)
 
     def draw_settings(self):
-        for c in self.setting_contols:
-            c.draw(self.screen)
+        self.setting_form.draw(self.screen)
+        #for c in self.setting_contols:
+        #    c.draw(self.screen)
 
-        self.sizeGroup.draw_panel(self.screen)
-        self.bkGroup.draw_panel(self.screen)
+        #self.sizeGroup.draw_panel(self.screen)
+        #self.bkGroup.draw_panel(self.screen)
 
     def draw(self):
         self.screen.fill(BK)
@@ -604,12 +486,19 @@ Space - Hard drop
             self.field.draw_cells_border(self.screen,self.projection,PROJECTTION_COLOR)
 
         if self.is_play_mode:
-            y = self.draw_summary(self.info_rect.top + CELL_SIZE)
+            y = self.draw_summary(self.info_rect.top + CELL_SIZE//2)
             y += CELL_SIZE
-            r = self.drawPreview(y)        
+            y += 4
+
+            r = None
+            if self.next_block_size != 0:
+                y = self.drawPreview(y)            
+                y += 14
+           
+            if self.is_hold:     
+                y = self.draw_hold(y) + 4
+              
             if self.is_paused:
-                if r != None:
-                    y = r.bottom
                 y += 4 * CELL_SIZE
                 pause_text = """
 Game is paused
@@ -618,49 +507,61 @@ Click any key
    to resume play
 """
                 self.draw_text(pause_text,y,self.big_text_font)
-            elif r != None:
-                y = self.drawItemsTotals(r)
+            else:
+                y = self.drawItemsTotals(y)
    
             y = self.info_rect.bottom - Game.Y_FROM_BOTTOM_FOR_BOX_TIME
             self.draw_text_border(f'{round(self.elapsed_time)}'.strip(),y)
         else:
-            y = self.draw_buttons()
-            if self.mode == self.MODE_ABOUT:
+            self.main_form.draw(self.screen)
+            y = self.main_form.y_info()
+            if self.mode == MODE_ABOUT:
                 y = self.draw_about(y)
                 self.draw_statistics(y)
-            elif self.mode == self.MODE_HELP:
+            elif self.mode == MODE_HELP:
                 self.draw_help(y)
-            elif self.mode == self.MODE_SETTINGS:
+            elif self.mode == MODE_SETTINGS:
                 self.draw_settings()
                 
         self.draw_prompt()
         pygame.display.update()
 
     def step(self):   
-        if  self.is_paused: return 
-        if not self.block.move(self.field):
+        if self.is_paused: return 
+        if self.lock_time != None:
+            dt = time.time() - self.lock_time
+            if dt >= 10.0:
+                self.lock_time = None
+                self.create_block()
+
+                if self.block == None:
+                    self.game_over()
+                
+        elif not self.block.move(self.field):
             if self.FPS == self.FAST_FPS:
                 self.FPS = self.REG_FPS
-            self.create_block()
-            if self.block == None:
-                self.game_over()
+            if self.is_lock_delay:
+                self.lock_time = time.time()
+            else:   
+                self.lock_time = None
+                self.create_block()
+
+                if self.block == None:
+                    self.game_over()
         else:
             removed_rows = self.field.clear_full_rows()
             if removed_rows > 0: 
-                n = len(SCORES)
-                if removed_rows >= n:
-                     self.score += SCORES[n-1]
-                else:
-                    self.score += SCORES[removed_rows]
-
+                n = min(len(SCORES),removed_rows)
+                score = SCORES[n-1] * (self.level + 1)
+                self.score += score
                 self.total_rows += removed_rows
                 self.level_rows += removed_rows
+                self.set_prompt(f"{removed_rows} rows removed. Score increased by {score}")
                 if self.level_rows >= Game.ROWS_PER_LEVEL:
                     self.next_level()                    
                 else:
                     if self.is_sound:
-                        self.clear_row_sound.play()
-                    self.set_prompt(f"{removed_rows} rows removed")
+                        self.clear_row_sound.play()                  
 
         if self.block != None:
             self.projection = self.block.get_path(self.field)
@@ -678,8 +579,6 @@ Click any key
             self.rotate_sound.play()
 
     def run(self):
-        left_click_time  = 0
-        right_click_time = 0
         while self.running:
             if self.is_play_mode:
                 self.clock.tick(self.FPS)  
@@ -690,6 +589,11 @@ Click any key
                 if event.type == pygame.QUIT:
                     self.running = False 
                 
+                elif not self.is_play_mode:
+                    if self.mode == MODE_SETTINGS:
+                        self.setting_form.handle_controls_events(event)    
+                    self.main_form.handle_controls_events(event)
+
                 elif event.type == pygame.KEYDOWN:
                     if self.is_play_mode:
                         if self.is_paused:
@@ -698,30 +602,42 @@ Click any key
                             self.pause()  
                         elif event.key == pygame.K_UP  or event.key == pygame.K_w:
                             self.rotate()
-                        elif event.key == pygame.K_s:
+                        elif event.key == pygame.K_z:
                             self.rotate_back()
-                        elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                        elif event.key == pygame.K_LEFT:
                             self.block.move_horizontal(self.field,-1)
-                        elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                        elif event.key == pygame.K_RIGHT:
                             self.block.move_horizontal(self.field,1)
                         elif event.key == pygame.K_ESCAPE:
                             self.pause()
                         elif event.key == pygame.K_SPACE:
-                            self.FPS = self.FAST_FPS
-                    elif event.key == pygame.K_SPACE:
-                        self.start()
-                    elif event.key == pygame.K_ESCAPE:
-                        if not Control.controls['btnBack'].hide:
-                            self.back()
- 
+                            self.drop(True)
+                        elif event.key == pygame.K_c:
+                            if self.is_hold:
+                                self.hold()
+
+                elif event.type == pygame.MOUSEMOTION:
+                    dx, dy = event.rel  # Relative movement since last event
+                    if dx > 0:
+                        self.block.move_horizontal(self.field,1)
+                        #print("Mouse moved RIGHT")
+                    elif dx < 0:
+                        self.block.move_horizontal(self.field,-1)
+                        #print("Mouse moved LEFT")
+
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    is_left_mouse = True if event.button == 1 else False
+                    if is_left_mouse:
+                        self.drop(True)
                
-                if not self.is_play_mode:
-                    (left_click_time,right_click_time) = handle_controls_events(event,left_click_time,right_click_time)
-
-
+  
             if self.is_play_mode:
                 self.step()
                 self.get_time()
+            else:
+                if self.mode == MODE_SETTINGS:
+                    self.setting_form.update_controls()    
+                self.main_form.update_controls() 
             #Draw
             self.draw()
         #
@@ -734,6 +650,9 @@ Click any key
         pygame.quit()
         sys.exit()
 
+    def drop(self,hard:bool):
+        self.FPS = self.FAST_FPS
+        
     
     def show_exit_message(self): 
         source = f"""
@@ -770,7 +689,10 @@ Click any key
             KEY_SIZE     : self.size_index,
             KEY_BK       : self.bk_index,
             KEY_BK_MUSIC : self.is_background_music,
-            KEY_USER_NAME:self.user_name
+            KEY_USER_NAME: self.user_name,
+            KEY_PREVIEW_SIZE: self.next_block_size,
+            KEY_GARBAGE   : self.garbage_rows,
+            KEY_HOLD      : self.is_hold
         }
      
         for i in range(len(SIZES)):
@@ -805,8 +727,14 @@ Click any key
             self.size_index = config.getint(section,KEY_SIZE   , fallback=self.size_index)
         if config.has_option(section,KEY_BK):
             self.bk_index = config.getint(section,KEY_BK   , fallback=self.bk_index)
+        if config.has_option(section,KEY_PREVIEW_SIZE):
+            self.next_block_size = config.getint(section,KEY_PREVIEW_SIZE   , fallback=self.next_block_size)
         if config.has_option(section,KEY_USER_NAME):
             self.user_name = config.get(section,KEY_USER_NAME)
+        if config.has_option(section,KEY_GARBAGE):  
+            self.garbage_rows = config.getint(section,KEY_GARBAGE , fallback=self.garbage_rows)
+        if config.has_option(section,KEY_HOLD):
+            self.is_hold = config.getboolean(section,KEY_HOLD , fallback=self.is_hold)
 
         for i in range(len(SIZES)):
             summary = self.summary[i]
@@ -826,8 +754,6 @@ Click any key
 def get_resource_path():
    base_path = getattr(sys, '_MEIPASS', os.path.abspath("."))
    return os.path.join(base_path,ASSET_FOLDER)
-
-
 
 if __name__ == '__main__':
     game = Game()
