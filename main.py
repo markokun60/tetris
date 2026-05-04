@@ -1,4 +1,4 @@
-from re import S
+import asyncio
 from turtle import right
 import pygame
 import random
@@ -38,6 +38,14 @@ class Game:
         pygame.init()
         pygame.font.init()
         pygame.mixer.init()
+
+        if sys.platform == "emscripten":
+            self.is_config_support = False
+            self.is_summary_support = False
+        else:
+            self.is_config_support = False
+            self.is_summary_support = False
+
 
         self.resource_folder = get_resource_path()
         self.screen = pygame.display.set_mode((WINDOW_WIDTH,WINDOW_HEIGHT))
@@ -97,10 +105,10 @@ class Game:
         #
         self.rotate_sound    = pygame.mixer.Sound(os.path.join(self.resource_folder,SOUND_FOLDER,"rotate.ogg"))
         self.clear_row_sound = pygame.mixer.Sound(os.path.join(self.resource_folder,SOUND_FOLDER,"clear.ogg"))
-        self.start_sound     = pygame.mixer.Sound(os.path.join(self.resource_folder,SOUND_FOLDER,"start.wav"))
-        self.exit_sound      = pygame.mixer.Sound(os.path.join(self.resource_folder,SOUND_FOLDER,"exit.mp3"))
-        self.loss_sound      = pygame.mixer.Sound(os.path.join(self.resource_folder,SOUND_FOLDER,"loss.mp3"))
-        self.new_lvl_sound   = pygame.mixer.Sound(os.path.join(self.resource_folder,SOUND_FOLDER,"new_level.mp3"))
+        self.start_sound     = pygame.mixer.Sound(os.path.join(self.resource_folder,SOUND_FOLDER,"start.ogg"))    
+        self.exit_sound      = pygame.mixer.Sound(os.path.join(self.resource_folder,SOUND_FOLDER,"exit.ogg"))
+        self.loss_sound      = pygame.mixer.Sound(os.path.join(self.resource_folder,SOUND_FOLDER,"loss.ogg"))
+        self.new_lvl_sound   = pygame.mixer.Sound(os.path.join(self.resource_folder,SOUND_FOLDER,"new_level.ogg"))
 
         self.game_music = None    
      
@@ -116,6 +124,8 @@ class Game:
 
         self.items_counts = [0,0,0,0,0,0,0,0]     
         self.mode = MODE_INFO
+
+
   
     def set_defalut(self):
         self.is_sound        = True
@@ -154,7 +164,7 @@ class Game:
 
     def draw_prompt(self):
         if len(self.prompt) > 0:
-            text = self.info_text_font.render(self.prompt,1,TEXT_COLOR ) 
+            text = self.small_text_font.render(self.prompt,1,TEXT_COLOR ) 
             y = self.info_rect.bottom - text.get_height() - Game.Y_FROM_BOTTOM_FOR_BOX_TIME - text.get_height()
             x = (self.info_rect.width - text.get_width())//2
             x += self.info_rect.left
@@ -193,9 +203,9 @@ class Game:
         self.FPS = self.REG_FPS
 
         if not self.start_game_music() :         
-            if self.is_sound:
+            if self.is_sound and self.start_sound != None:
                 self.start_sound.play()
-                
+                               
     def game_over(self): 
         if self.game_music != None:
             self.game_music.stop()
@@ -556,7 +566,7 @@ Click any key
                 self.score += score
                 self.total_rows += removed_rows
                 self.level_rows += removed_rows
-                self.set_prompt(f"{removed_rows} rows removed. Score increased by {score}")
+                self.set_prompt(f"{removed_rows} rows removed.")
                 if self.level_rows >= Game.ROWS_PER_LEVEL:
                     self.next_level()                    
                 else:
@@ -682,6 +692,8 @@ Click any key
         #pygame.time.wait(1000) # Wait for 1 second
 
     def save_config(self):
+        if not self.is_config_support: return
+        #
         file_path = os.path.join(DATA_FOLDER,SETTINGS_FILE)
         config = configparser.ConfigParser()
         config[SECTION_GENERAL] = {
@@ -711,6 +723,8 @@ Click any key
             config.write(configfile)
 
     def read_config(self):
+        if not self.is_config_support: return
+        #
         file_path = os.path.join(DATA_FOLDER,SETTINGS_FILE)
         if not os.path.isfile(file_path):
             self.save_config()
@@ -754,6 +768,10 @@ Click any key
 def get_resource_path():
    base_path = getattr(sys, '_MEIPASS', os.path.abspath("."))
    return os.path.join(base_path,ASSET_FOLDER)
+
+async def main():
+    game = Game()
+    game.run()     
 
 if __name__ == '__main__':
     game = Game()

@@ -221,5 +221,6 @@ __marimo__/
 *.bat
 *.lnk
 *.zip
+*.proj
 snake  py
 
