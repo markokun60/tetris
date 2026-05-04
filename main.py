@@ -43,8 +43,8 @@ class Game:
             self.is_config_support = False
             self.is_summary_support = False
         else:
-            self.is_config_support = False
-            self.is_summary_support = False
+            self.is_config_support = True
+            self.is_summary_support =True
 
 
         self.resource_folder = get_resource_path()
@@ -126,7 +126,6 @@ class Game:
         self.mode = MODE_INFO
 
 
-  
     def set_defalut(self):
         self.is_sound        = True
         self.is_background_music = True

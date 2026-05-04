@@ -4,24 +4,15 @@ contols
 https://github.com/dmfabritius/PygameControls/tree/main
 
 
-py -m venv env_games
+py -m venv .venv
 
 activate env
-env_games\Scripts\Activate.bat
+.venv\Scripts\Activate.bat
 
 install
 pip install pygame-ce
 pip install pyinstaller
-Create env
-py -m venv env_games
 
-activate env
-env_games\Scripts\Activate.bat
-
-install
----------------
-pip install pygame-ce
-pip install pyinstaller
 
 create exe
 --------------
